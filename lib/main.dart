@@ -65,13 +65,12 @@ class SolarSystemPainter extends CustomPainter {
       final double dx = center.dx + planet.distanceFromSun * cos(angle);
       final double dy = center.dy + planet.distanceFromSun * sin(angle);
 
-      final planetPaint = Paint()..color = planet.color;
+      final planetPaint = Paint()..color = planet.color.withOpacity(0.65);
       canvas.drawCircle(Offset(dx, dy), planet.radius, planetPaint);
       final orbitPaint = Paint()
-        ..color = planet.color
-            .withOpacity(0.3) // Using a faded version of the planet color
-        ..style = PaintingStyle.stroke // We only want the outline
-        ..strokeWidth = 1.0; // Width of the orbit
+        ..color = Colors.white10
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
 
       canvas.drawCircle(center, planet.distanceFromSun, orbitPaint);
     }
@@ -91,65 +90,69 @@ class SolarSystem extends StatefulWidget {
 class _SolarSystemState extends State<SolarSystem>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  double _elapsedTime = 0; // in seconds
+  final TransformationController _transformationController =
+      TransformationController();
+
+  double _elapsedTime = 0;
+  static const baseDistance = 80.0;
+  static const distanceIncrement = 50.0;
 
   final planets = [
     Planet(
       name: 'Mercury',
       color: Colors.grey,
-      distanceFromSun: 60.0,
+      distanceFromSun: baseDistance,
       radius: 5.0,
-      orbitalDuration: 88 / 365.25,
+      orbitalDuration: 1,
     ),
     Planet(
       name: 'Venus',
       color: Colors.amber,
-      distanceFromSun: 90.0,
+      distanceFromSun: baseDistance + distanceIncrement * 1,
       radius: 7.0,
-      orbitalDuration: 224.7 / 365.25,
+      orbitalDuration: 224.7 / 88,
     ),
     Planet(
       name: 'Earth',
       color: Colors.blue,
-      distanceFromSun: 120.0,
+      distanceFromSun: baseDistance + distanceIncrement * 2,
       radius: 8.0,
-      orbitalDuration:
-          1.0, // Earth's time period is our reference, so 1 second.
+      orbitalDuration: 365 / 88,
     ),
     Planet(
       name: 'Mars',
       color: Colors.red,
-      distanceFromSun: 150.0,
+      distanceFromSun: baseDistance + distanceIncrement * 3,
       radius: 6.0,
-      orbitalDuration: 687 / 365.25,
+      orbitalDuration: 687 / 88,
     ),
     Planet(
       name: 'Jupiter',
       color: Colors.orange,
-      distanceFromSun: 180.0,
+      distanceFromSun: baseDistance + distanceIncrement * 4,
       radius: 15.0,
-      orbitalDuration: 11.9,
+      orbitalDuration: 4333 / 88,
     ),
     Planet(
       name: 'Saturn',
       color: Colors.yellow,
-      distanceFromSun: 210.0,
+      distanceFromSun: baseDistance + distanceIncrement * 5,
       radius: 12.0,
-      orbitalDuration: 29.5,
+      orbitalDuration: 10757 / 88,
     ),
     Planet(
       name: 'Uranus',
       color: Colors.lightBlue,
-      distanceFromSun: 240.0,
+      distanceFromSun: baseDistance + distanceIncrement * 6,
       radius: 10.0,
-      orbitalDuration: 84.0,
+      orbitalDuration: 30687 / 88,
     ),
     Planet(
       name: 'Neptune',
-      color: Colors.blue,
-      distanceFromSun: 270.0,
+      color: Colors.blueAccent,
+      distanceFromSun: baseDistance + distanceIncrement * 7,
       radius: 9.0,
-      orbitalDuration: 164.8,
+      orbitalDuration: 60190 / 88,
     ),
   ];
 
@@ -171,12 +174,18 @@ class _SolarSystemState extends State<SolarSystem>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        return CustomPaint(
-          painter: SolarSystemPainter(
+        return InteractiveViewer(
+          transformationController: _transformationController,
+          minScale: 0.5, // Minimum zoom scale
+          maxScale: 5.0, // Maximum zoom scale
+          child: CustomPaint(
+            painter: SolarSystemPainter(
               planets: planets,
               animation: _controller,
-              elapsedTime: _elapsedTime),
-          size: Size.infinite,
+              elapsedTime: _elapsedTime,
+            ),
+            size: Size.infinite,
+          ),
         );
       },
     );
@@ -185,6 +194,8 @@ class _SolarSystemState extends State<SolarSystem>
   @override
   void dispose() {
     _controller.dispose();
+    _transformationController
+        .dispose(); // Dispose the transformation controller
     super.dispose();
   }
 }
