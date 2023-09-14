@@ -1,12 +1,14 @@
-// ignore_for_file: library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-void main() => runApp(const MyApp());
+import 'package:solar_system_emulation/planet_model.dart';
+import 'package:solar_system_emulation/widgets/planet_widget.dart';
+import 'package:solar_system_emulation/widgets/sun_widget.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+void main() => runApp(const SolarEmulatorApp());
+
+class SolarEmulatorApp extends StatelessWidget {
+  const SolarEmulatorApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,87 +25,14 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class Planet {
-  final String name;
-  final Color color;
-  final double distanceFromSun;
-  final double radius;
-  final double
-      orbitalDuration; // in seconds based on Earth's time period as 1 second
-
-  Planet({
-    required this.name,
-    required this.color,
-    required this.distanceFromSun,
-    required this.radius,
-    required this.orbitalDuration,
-  });
-}
-
-class SolarSystemPainter extends CustomPainter {
-  final List<Planet> planets;
-  final Animation<double> animation;
-  final double elapsedTime; // Add this
-
-  SolarSystemPainter({
-    required this.planets,
-    required this.animation,
-    this.elapsedTime = 0.0,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const sunRadius = 50.0;
-
-    // Define the neon glow gradient
-    const Gradient sunGlow = RadialGradient(
-      colors: [
-        Colors.yellow,
-        Colors.yellowAccent,
-        Colors.orangeAccent,
-        Colors.transparent,
-      ],
-      stops: [0, 0.6, 0.8, 1],
-    );
-
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final Rect sunBounds =
-        Rect.fromCircle(center: center, radius: sunRadius * 1.5);
-
-    // Paint the sun with its neon glow
-    final Paint sunPaint = Paint()..shader = sunGlow.createShader(sunBounds);
-
-    canvas.drawCircle(center, sunRadius * 1.5, sunPaint);
-
-    for (var planet in planets) {
-      final double completedOrbits = elapsedTime / planet.orbitalDuration;
-      final double angle = 2 * pi * completedOrbits;
-      final double dx = center.dx + planet.distanceFromSun * cos(angle);
-      final double dy = center.dy + planet.distanceFromSun * sin(angle);
-
-      final planetPaint = Paint()..color = planet.color.withOpacity(0.65);
-      canvas.drawCircle(Offset(dx, dy), planet.radius, planetPaint);
-      final orbitPaint = Paint()
-        ..color = Colors.white10
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
-
-      canvas.drawCircle(center, planet.distanceFromSun, orbitPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
 class SolarSystem extends StatefulWidget {
   const SolarSystem({super.key});
 
   @override
-  _SolarSystemState createState() => _SolarSystemState();
+  SolarSystemState createState() => SolarSystemState();
 }
 
-class _SolarSystemState extends State<SolarSystem>
+class SolarSystemState extends State<SolarSystem>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   final TransformationController _transformationController =
@@ -192,15 +121,23 @@ class _SolarSystemState extends State<SolarSystem>
       builder: (context, child) {
         return InteractiveViewer(
           transformationController: _transformationController,
-          minScale: 0.5, // Minimum zoom scale
-          maxScale: 5.0, // Maximum zoom scale
-          child: CustomPaint(
-            painter: SolarSystemPainter(
-              planets: planets,
-              animation: _controller,
-              elapsedTime: _elapsedTime,
-            ),
-            size: Size.infinite,
+          minScale: 0.1,
+          maxScale: 15.0,
+          child: Stack(
+            children: [
+              const SunWidget(), // You'd need to create a separate SunWidget too
+              ...planets.map((planet) {
+                final double completedOrbits =
+                    _elapsedTime / planet.orbitalDuration;
+                final double angle = 2 * pi * completedOrbits;
+                return PlanetWidget(
+                  planet: planet,
+                  angle: angle,
+                  center: Offset(MediaQuery.of(context).size.width / 2,
+                      MediaQuery.of(context).size.height / 2),
+                );
+              }).toList(),
+            ],
           ),
         );
       },
@@ -210,8 +147,7 @@ class _SolarSystemState extends State<SolarSystem>
   @override
   void dispose() {
     _controller.dispose();
-    _transformationController
-        .dispose(); // Dispose the transformation controller
+    _transformationController.dispose();
     super.dispose();
   }
 }
