@@ -35,7 +35,7 @@ class SolarSystemState extends State<SolarSystem>
 
   double _elapsedTime = 0;
   static const baseDistance = 100.0;
-  static const distanceIncrement = 50.0;
+  static const distanceIncrement = 46.0;
 
   final planets = [
     Planet(

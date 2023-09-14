@@ -34,6 +34,7 @@ class PlanetWidget extends StatelessWidget {
 class PlanetPainter extends CustomPainter {
   final Planet planet;
   final double angle;
+  final Random _random = Random();
 
   PlanetPainter({required this.planet, required this.angle});
 
@@ -42,6 +43,32 @@ class PlanetPainter extends CustomPainter {
     final Offset center = Offset(size.width / 2, size.height / 2);
     final double dx = center.dx + planet.distanceFromSun * cos(angle);
     final double dy = center.dy + planet.distanceFromSun * sin(angle);
+
+    // Render the sprinkles for the trail
+    for (int i = 1; i <= 10; i++) {
+      double trailAngle = angle - (2 * pi * i * 0.005);
+      double trailDx = center.dx + planet.distanceFromSun * cos(trailAngle);
+      double trailDy = center.dy + planet.distanceFromSun * sin(trailAngle);
+
+      // Scatter several dots around each trail point
+      for (int j = 0; j < 5; j++) {
+        // 5 dots around each trail point
+        final offsetX =
+            _random.nextDouble() * 8 - 4; // Random value between -4 and 4
+        final offsetY =
+            _random.nextDouble() * 8 - 4; // Random value between -4 and 4
+
+        final sprinklePaint = Paint()
+          ..color = planet.color.withOpacity(0.65 * (1 - i * 0.1))
+          ..style = PaintingStyle.fill;
+
+        double sprinkleSize =
+            _random.nextDouble() * 2; // Random dot size up to 2
+
+        canvas.drawCircle(Offset(trailDx + offsetX, trailDy + offsetY),
+            sprinkleSize, sprinklePaint);
+      }
+    }
 
     final planetPaint = Paint()..color = planet.color.withOpacity(0.65);
     canvas.drawCircle(Offset(dx, dy), planet.radius, planetPaint);
