@@ -54,10 +54,26 @@ class SolarSystemPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const sunRadius = 50.0;
-    final sunPaint = Paint()..color = Colors.yellow;
+
+    // Define the neon glow gradient
+    const Gradient sunGlow = RadialGradient(
+      colors: [
+        Colors.yellow,
+        Colors.yellowAccent,
+        Colors.orangeAccent,
+        Colors.transparent,
+      ],
+      stops: [0, 0.6, 0.8, 1],
+    );
 
     final Offset center = Offset(size.width / 2, size.height / 2);
-    canvas.drawCircle(center, sunRadius, sunPaint);
+    final Rect sunBounds =
+        Rect.fromCircle(center: center, radius: sunRadius * 1.5);
+
+    // Paint the sun with its neon glow
+    final Paint sunPaint = Paint()..shader = sunGlow.createShader(sunBounds);
+
+    canvas.drawCircle(center, sunRadius * 1.5, sunPaint);
 
     for (var planet in planets) {
       final double completedOrbits = elapsedTime / planet.orbitalDuration;
@@ -94,7 +110,7 @@ class _SolarSystemState extends State<SolarSystem>
       TransformationController();
 
   double _elapsedTime = 0;
-  static const baseDistance = 80.0;
+  static const baseDistance = 100.0;
   static const distanceIncrement = 50.0;
 
   final planets = [
