@@ -12,15 +12,10 @@ class SolarEmulatorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Solar System Emulation',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-      ),
-      home: const SolarSystem(),
+      home: SolarSystem(),
     );
   }
 }
@@ -104,43 +99,72 @@ class SolarSystemState extends State<SolarSystem>
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 1))
-          ..addListener(() {
-            setState(() {
-              _elapsedTime += 1 / 60;
-            });
-          })
-          ..repeat();
+    _controller = AnimationController(
+        vsync: this, duration: Duration(seconds: 1 ~/ _speed))
+      ..addListener(() {
+        setState(() {
+          _elapsedTime += 1 / 60 * _speed;
+        });
+      })
+      ..repeat();
   }
+
+  double _speed = 1; // Default speed is 1
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return InteractiveViewer(
-          transformationController: _transformationController,
-          minScale: 0.1,
-          maxScale: 15.0,
-          child: Stack(
-            children: [
-              const SunWidget(), // You'd need to create a separate SunWidget too
-              ...planets.map((planet) {
-                final double completedOrbits =
-                    _elapsedTime / planet.orbitalDuration;
-                final double angle = 2 * pi * completedOrbits;
-                return PlanetWidget(
-                  planet: planet,
-                  angle: angle,
-                  center: Offset(MediaQuery.of(context).size.width / 2,
-                      MediaQuery.of(context).size.height / 2),
-                );
-              }).toList(),
-            ],
+    return Row(
+      children: [
+        Expanded(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              return InteractiveViewer(
+                transformationController: _transformationController,
+                minScale: 0.1,
+                maxScale: 15.0,
+                child: Stack(
+                  children: [
+                    const SunWidget(), // You'd need to create a separate SunWidget too
+                    ...planets.map((planet) {
+                      final double completedOrbits =
+                          _elapsedTime / planet.orbitalDuration;
+                      final double angle = 2 * pi * completedOrbits;
+                      return PlanetWidget(
+                        planet: planet,
+                        angle: angle,
+                        center: Offset(MediaQuery.of(context).size.width / 2,
+                            MediaQuery.of(context).size.height / 2),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              );
+            },
           ),
-        );
-      },
+        ),
+        RotatedBox(
+          quarterTurns: 1,
+          child: Material(
+            color: Colors.transparent,
+            child: Slider(
+              //give all colors to it
+              activeColor: Colors.white,
+
+              value: _speed,
+              onChanged: (value) {
+                setState(() {
+                  _speed = value;
+                  _controller.duration = Duration(seconds: 1 ~/ _speed);
+                });
+              },
+              min: 0.1,
+              max: 5.0,
+              divisions: 49,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
