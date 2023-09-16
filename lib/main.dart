@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
 import 'dart:math';
 
+import 'package:flutter/material.dart';
+import 'package:solar_system_emulation/constants.dart';
 import 'package:solar_system_emulation/planet_model.dart';
 import 'package:solar_system_emulation/widgets/planet_widget.dart';
 import 'package:solar_system_emulation/widgets/sun_widget.dart';
@@ -34,67 +35,6 @@ class SolarSystemState extends State<SolarSystem>
       TransformationController();
 
   double _elapsedTime = 0;
-  static const baseDistance = 100.0;
-  static const distanceIncrement = 46.0;
-
-  final planets = [
-    Planet(
-      name: 'Mercury',
-      color: Colors.grey,
-      distanceFromSun: baseDistance,
-      radius: 5.0,
-      orbitalDuration: 1,
-    ),
-    Planet(
-      name: 'Venus',
-      color: Colors.amber,
-      distanceFromSun: baseDistance + distanceIncrement * 1,
-      radius: 7.0,
-      orbitalDuration: 224.7 / 88,
-    ),
-    Planet(
-      name: 'Earth',
-      color: Colors.blue,
-      distanceFromSun: baseDistance + distanceIncrement * 2,
-      radius: 8.0,
-      orbitalDuration: 365 / 88,
-    ),
-    Planet(
-      name: 'Mars',
-      color: Colors.red,
-      distanceFromSun: baseDistance + distanceIncrement * 3,
-      radius: 6.0,
-      orbitalDuration: 687 / 88,
-    ),
-    Planet(
-      name: 'Jupiter',
-      color: Colors.orange,
-      distanceFromSun: baseDistance + distanceIncrement * 4,
-      radius: 15.0,
-      orbitalDuration: 4333 / 88,
-    ),
-    Planet(
-      name: 'Saturn',
-      color: Colors.yellow,
-      distanceFromSun: baseDistance + distanceIncrement * 5,
-      radius: 12.0,
-      orbitalDuration: 10757 / 88,
-    ),
-    Planet(
-      name: 'Uranus',
-      color: Colors.lightBlue,
-      distanceFromSun: baseDistance + distanceIncrement * 6,
-      radius: 10.0,
-      orbitalDuration: 30687 / 88,
-    ),
-    Planet(
-      name: 'Neptune',
-      color: Colors.blueAccent,
-      distanceFromSun: baseDistance + distanceIncrement * 7,
-      radius: 9.0,
-      orbitalDuration: 60190 / 88,
-    ),
-  ];
 
   @override
   void initState() {
@@ -110,43 +50,77 @@ class SolarSystemState extends State<SolarSystem>
   }
 
   double _speed = 1; // Default speed is 1
+  PlanetNames selectedPlanet = PlanetNames.Earth;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return InteractiveViewer(
-                transformationController: _transformationController,
-                minScale: 0.1,
-                maxScale: 15.0,
-                child: Stack(
-                  children: [
-                    const SunWidget(), // You'd need to create a separate SunWidget too
-                    ...planets.map((planet) {
-                      final double completedOrbits =
-                          _elapsedTime / planet.orbitalDuration;
-                      final double angle = 2 * pi * completedOrbits;
-                      return PlanetWidget(
-                        planet: planet,
-                        angle: angle,
-                        center: Offset(MediaQuery.of(context).size.width / 2,
-                            MediaQuery.of(context).size.height / 2),
-                      );
-                    }).toList(),
-                  ],
-                ),
-              );
-            },
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Row(
+        children: [
+          SizedBox(
+            width: 100.0, // Adjust width to your needs
+            child: ListView.builder(
+              itemCount: Constants.planets.length,
+              itemBuilder: (context, index) {
+                final planet = Constants.planets[index];
+                return ListTile(
+                  enableFeedback: false,
+                  title: Text(
+                    planet.name.toString(),
+                    style: TextStyle(
+                      color: planet.name == selectedPlanet
+                          ? Colors.white
+                          : Colors.white30,
+                    ),
+                  ), // Assuming your Planet class has a property called 'name'
+
+                  onTap: () {
+                    setState(() {
+                      selectedPlanet = planet.name;
+                    });
+                  },
+                );
+              },
+            ),
           ),
-        ),
-        RotatedBox(
-          quarterTurns: 1,
-          child: Material(
-            color: Colors.transparent,
+          Expanded(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return InteractiveViewer(
+                  transformationController: _transformationController,
+                  minScale: 0.1,
+                  maxScale: 15.0,
+                  child: Stack(
+                    children: [
+                      const SunWidget(),
+                      ...Constants.planets.map((planet) {
+                        final double completedOrbits =
+                            _elapsedTime / planet.orbitalDuration;
+                        double angle = 2 * pi * completedOrbits;
+
+                        // Make Venus rotate in the opposite direction
+                        if (planet.name == PlanetNames.Venus) {
+                          angle = -angle;
+                        }
+
+                        return PlanetOrbitWidget(
+                          planet: planet,
+                          angle: angle,
+                          isHighlighted: planet.name == selectedPlanet,
+                          center: Offset(MediaQuery.of(context).size.width / 2,
+                              MediaQuery.of(context).size.height / 2),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          RotatedBox(
+            quarterTurns: 1,
             child: Slider(
               //give all colors to it
               activeColor: Colors.white,
@@ -163,8 +137,8 @@ class SolarSystemState extends State<SolarSystem>
               divisions: 49,
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

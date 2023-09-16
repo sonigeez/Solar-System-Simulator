@@ -1,7 +1,9 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:ui';
 
 class Planet {
-  final String name;
+  final PlanetNames name;
   final Color color;
   final double distanceFromSun;
   final double radius;
@@ -14,4 +16,19 @@ class Planet {
     required this.radius,
     required this.orbitalDuration,
   });
+}
+
+enum PlanetNames {
+  Mercury,
+  Venus,
+  Earth,
+  Mars,
+  Jupiter,
+  Saturn,
+  Uranus,
+  Neptune;
+
+  //toString
+  @override
+  String toString() => name;
 }
